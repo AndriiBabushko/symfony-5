@@ -3,7 +3,9 @@
 namespace App\Entity;
 
 use App\Repository\GroupMemberRepository;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: GroupMemberRepository::class)]
 #[ORM\Table(name: 'group_members')]
@@ -16,17 +18,31 @@ class GroupMember
 
     #[ORM\ManyToOne(targetEntity: Group::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: "Group must be specified.")]
     private ?Group $group = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: "User must be specified.")]
     private ?User $user = null;
 
     #[ORM\Column(length: 20)]
-    private ?string $role = null; // admin, member
+    #[Assert\NotBlank(message: "Role should not be blank.")]
+    #[Assert\NotNull(message: "Role cannot be null.")]
+    #[Assert\Choice(
+        choices: ["admin", "member"],
+        message: "Role must be one of 'admin' or 'member'."
+    )]
+    #[Assert\Length(
+        max: 20,
+        maxMessage: "Role cannot exceed {{ limit }} characters."
+    )]
+    private ?string $role = null;
 
     #[ORM\Column(type: 'datetime')]
-    private ?\DateTimeInterface $joinedAt = null;
+    #[Assert\NotNull(message: "JoinedAt cannot be null.")]
+    #[Assert\Type(DateTimeInterface::class, message: "JoinedAt must be a valid datetime.")]
+    private ?DateTimeInterface $joinedAt = null;
 
     public function getId(): ?int
     {
@@ -69,12 +85,12 @@ class GroupMember
         return $this;
     }
 
-    public function getJoinedAt(): ?\DateTimeInterface
+    public function getJoinedAt(): ?DateTimeInterface
     {
         return $this->joinedAt;
     }
 
-    public function setJoinedAt(\DateTimeInterface $joinedAt): self
+    public function setJoinedAt(DateTimeInterface $joinedAt): self
     {
         $this->joinedAt = $joinedAt;
 

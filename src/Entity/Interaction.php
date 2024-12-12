@@ -3,7 +3,9 @@
 namespace App\Entity;
 
 use App\Repository\InteractionRepository;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: InteractionRepository::class)]
 #[ORM\Table(name: 'interactions')]
@@ -16,16 +18,33 @@ class Interaction
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: "User must be specified.")]
     private ?User $user = null;
 
     #[ORM\Column(length: 50)]
-    private ?string $interactionType = null; // share, follow
+    #[Assert\NotBlank(message: "Interaction type should not be blank.")]
+    #[Assert\NotNull(message: "Interaction type cannot be null.")]
+    #[Assert\Choice(
+        choices: ["share", "follow"],
+        message: "Interaction type must be one of 'share' or 'follow'."
+    )]
+    #[Assert\Length(
+        max: 50,
+        maxMessage: "Interaction type cannot exceed {{ limit }} characters."
+    )]
+    private ?string $interactionType = null;
 
     #[ORM\Column(nullable: true)]
-    private ?int $targetId = null; // ID об'єкта взаємодії (наприклад, Post, User)
+    #[Assert\Type(
+        type: "integer",
+        message: "Target ID must be a valid integer."
+    )]
+    private ?int $targetId = null;
 
     #[ORM\Column(type: 'datetime')]
-    private ?\DateTimeInterface $createdAt = null;
+    #[Assert\NotNull(message: "CreatedAt cannot be null.")]
+    #[Assert\Type(DateTimeInterface::class, message: "CreatedAt must be a valid datetime.")]
+    private ?DateTimeInterface $createdAt = null;
 
     public function getId(): ?int
     {
@@ -68,12 +87,12 @@ class Interaction
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?DateTimeInterface
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    public function setCreatedAt(DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
 

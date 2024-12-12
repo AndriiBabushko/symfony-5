@@ -3,7 +3,9 @@
 namespace App\Entity;
 
 use App\Repository\FriendRepository;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: FriendRepository::class)]
 #[ORM\Table(name: 'friends')]
@@ -16,17 +18,31 @@ class Friend
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: "User cannot be null.")]
     private ?User $user = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: "Friend cannot be null.")]
     private ?User $friend = null;
 
     #[ORM\Column(type: 'string', length: 20)]
-    private ?string $status = null; // pending, accepted, declined
+    #[Assert\NotBlank(message: "Status should not be blank.")]
+    #[Assert\NotNull(message: "Status cannot be null.")]
+    #[Assert\Choice(
+        choices: ["pending", "accepted", "declined"],
+        message: "Status must be one of 'pending', 'accepted', or 'declined'."
+    )]
+    #[Assert\Length(
+        max: 20,
+        maxMessage: "Status cannot exceed {{ limit }} characters."
+    )]
+    private ?string $status = null;
 
     #[ORM\Column(type: 'datetime')]
-    private ?\DateTimeInterface $createdAt = null;
+    #[Assert\NotNull(message: "CreatedAt cannot be null.")]
+    #[Assert\Type(DateTimeInterface::class, message: "CreatedAt must be a valid datetime.")]
+    private ?DateTimeInterface $createdAt = null;
 
     public function getId(): ?int
     {
@@ -69,12 +85,12 @@ class Friend
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?DateTimeInterface
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    public function setCreatedAt(DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
 

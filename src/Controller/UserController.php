@@ -2,9 +2,8 @@
 
 namespace App\Controller;
 
+use App\Services\UserService;
 use App\Repository\UserRepository;
-use App\Entity\User;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,11 +13,11 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/users', name: 'user_')]
 class UserController extends AbstractController
 {
-    private EntityManagerInterface $entityManager;
+    private UserService $userService;
 
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(UserService $userService)
     {
-        $this->entityManager = $entityManager;
+        $this->userService = $userService;
     }
 
     #[Route('', name: 'get_all', methods: ['GET'])]
@@ -26,15 +25,7 @@ class UserController extends AbstractController
     {
         $users = $userRepository->findAll();
 
-        $userData = array_map(function (User $user) {
-            return [
-                'id' => $user->getId(),
-                'username' => $user->getUsername(),
-                'email' => $user->getEmail(),
-                'createdAt' => $user->getCreatedAt()->format('Y-m-d H:i:s'),
-                'profilePicture' => $user->getProfilePicture(),
-            ];
-        }, $users);
+        $userData = array_map([$this->userService, 'serializeUser'], $users);
 
         return new JsonResponse(['data' => $userData], Response::HTTP_OK);
     }
@@ -48,45 +39,22 @@ class UserController extends AbstractController
             return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $userData = [
-            'id' => $user->getId(),
-            'username' => $user->getUsername(),
-            'email' => $user->getEmail(),
-            'createdAt' => $user->getCreatedAt()->format('Y-m-d H:i:s'),
-            'profilePicture' => $user->getProfilePicture(),
-        ];
-
-        return new JsonResponse(['data' => $userData], Response::HTTP_OK);
+        return new JsonResponse(['data' => $this->userService->serializeUser($user)], Response::HTTP_OK);
     }
 
     #[Route('', name: 'create', methods: ['POST'])]
-    public function create(Request $request, UserRepository $userRepository): JsonResponse
+    public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
-        if ($userRepository->findOneBy(['email' => $data['email']])) {
-            return new JsonResponse(['error' => 'Email already exists'], Response::HTTP_CONFLICT);
-        }
+        $user = $this->userService->createUser(
+            $data['username'] ?? null,
+            $data['email'] ?? null,
+            $data['password'] ?? null,
+            $data['profilePicture'] ?? null
+        );
 
-        $user = new User();
-        $user->setUsername($data['username'] ?? null);
-        $user->setEmail($data['email'] ?? null);
-        $user->setPassword($data['password'] ?? null);
-        $user->setCreatedAt(new \DateTime());
-        $user->setProfilePicture($data['profilePicture'] ?? null);
-
-        $this->entityManager->persist($user);
-        $this->entityManager->flush();
-
-        $userData = [
-            'id' => $user->getId(),
-            'username' => $user->getUsername(),
-            'email' => $user->getEmail(),
-            'createdAt' => $user->getCreatedAt()->format('Y-m-d H:i:s'),
-            'profilePicture' => $user->getProfilePicture(),
-        ];
-
-        return new JsonResponse(['data' => $userData], Response::HTTP_CREATED);
+        return new JsonResponse(['data' => $this->userService->serializeUser($user)], Response::HTTP_CREATED);
     }
 
     #[Route('/{id}', name: 'update', methods: ['PUT'])]
@@ -100,29 +68,9 @@ class UserController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
 
-        if (isset($data['email'])) {
-            $existingUser = $userRepository->findOneBy(['email' => $data['email']]);
-            if ($existingUser && $existingUser->getId() !== $user->getId()) {
-                return new JsonResponse(['error' => 'Email already exists'], Response::HTTP_CONFLICT);
-            }
-            $user->setEmail($data['email']);
-        }
+        $this->userService->updateUser($user, $data);
 
-        $user->setUsername($data['username'] ?? $user->getUsername());
-        $user->setPassword($data['password'] ?? $user->getPassword());
-        $user->setProfilePicture($data['profilePicture'] ?? $user->getProfilePicture());
-
-        $this->entityManager->flush();
-
-        $userData = [
-            'id' => $user->getId(),
-            'username' => $user->getUsername(),
-            'email' => $user->getEmail(),
-            'createdAt' => $user->getCreatedAt()->format('Y-m-d H:i:s'),
-            'profilePicture' => $user->getProfilePicture(),
-        ];
-
-        return new JsonResponse(['data' => $userData], Response::HTTP_OK);
+        return new JsonResponse(['data' => $this->userService->serializeUser($user)], Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
@@ -134,8 +82,7 @@ class UserController extends AbstractController
             return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $this->entityManager->remove($user);
-        $this->entityManager->flush();
+        $this->userService->deleteUser($user);
 
         return new JsonResponse(['message' => 'User deleted successfully'], Response::HTTP_OK);
     }

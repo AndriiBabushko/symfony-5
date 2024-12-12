@@ -3,8 +3,10 @@
 namespace App\Entity;
 
 use App\Repository\CommentRepository;
+use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CommentRepository::class)]
 #[ORM\Table(name: 'comments')]
@@ -16,17 +18,29 @@ class Comment
     private ?int $id = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: "Content should not be blank.")]
+    #[Assert\NotNull(message: "Content cannot be null.")]
+    #[Assert\Length(
+        min: 1,
+        max: 1000,
+        minMessage: "Content must be at least {{ limit }} character long.",
+        maxMessage: "Content cannot be longer than {{ limit }} characters."
+    )]
     private ?string $content = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
+    #[Assert\NotNull(message: "CreatedAt cannot be null.")]
+    #[Assert\Type(DateTimeInterface::class, message: "CreatedAt must be a valid datetime.")]
+    private ?DateTimeInterface $createdAt = null;
 
     #[ORM\ManyToOne(targetEntity: Post::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: "Post must be associated with the comment.")]
     private ?Post $post = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: "User must be associated with the comment.")]
     private ?User $user = null;
 
     public function getId(): ?int
@@ -46,12 +60,12 @@ class Comment
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?DateTimeInterface
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    public function setCreatedAt(DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
 

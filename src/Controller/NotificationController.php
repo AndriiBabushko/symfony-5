@@ -2,11 +2,7 @@
 
 namespace App\Controller;
 
-use App\Repository\NotificationRepository;
-use App\Entity\Notification;
-use App\Repository\UserRepository;
-use DateTime;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Services\NotificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,123 +12,49 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/notifications', name: 'notification_')]
 class NotificationController extends AbstractController
 {
-    private EntityManagerInterface $entityManager;
+    private NotificationService $notificationService;
 
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(NotificationService $notificationService)
     {
-        $this->entityManager = $entityManager;
+        $this->notificationService = $notificationService;
     }
 
     #[Route('', name: 'get_all', methods: ['GET'])]
-    public function getAll(NotificationRepository $notificationRepository): JsonResponse
+    public function getAll(): JsonResponse
     {
-        $notifications = $notificationRepository->findAll();
-
-        $notificationData = array_map(function (Notification $notification) {
-            return [
-                'id' => $notification->getId(),
-                'type' => $notification->getType(),
-                'data' => $notification->getData(),
-                'userId' => $notification->getUser()->getId(),
-                'createdAt' => $notification->getCreatedAt()->format('Y-m-d H:i:s'),
-            ];
-        }, $notifications);
-
-        return new JsonResponse(['data' => $notificationData], Response::HTTP_OK);
+        $notifications = $this->notificationService->getAllNotifications();
+        return new JsonResponse(['data' => $notifications], Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'get_one', methods: ['GET'])]
-    public function getOne(NotificationRepository $notificationRepository, int $id): JsonResponse
+    public function getOne(int $id): JsonResponse
     {
-        $notification = $notificationRepository->find($id);
-
-        if (!$notification) {
-            return new JsonResponse(['error' => 'Notification not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        $notificationData = [
-            'id' => $notification->getId(),
-            'type' => $notification->getType(),
-            'data' => $notification->getData(),
-            'userId' => $notification->getUser()->getId(),
-            'createdAt' => $notification->getCreatedAt()->format('Y-m-d H:i:s'),
-        ];
-
-        return new JsonResponse(['data' => $notificationData], Response::HTTP_OK);
+        $notification = $this->notificationService->getNotificationById($id);
+        return new JsonResponse(['data' => $notification], Response::HTTP_OK);
     }
 
     #[Route('', name: 'create', methods: ['POST'])]
-    public function create(Request $request, UserRepository $userRepository): JsonResponse
+    public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
+        $notification = $this->notificationService->createNotification($data);
 
-        if (empty($data['userId']) || !is_numeric($data['userId'])) {
-            return new JsonResponse(['error' => 'Invalid user ID'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $user = $userRepository->find($data['userId']);
-        if (!$user) {
-            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        $notification = new Notification();
-        $notification->setType($data['type'] ?? null);
-        $notification->setData($data['data'] ?? null);
-        $notification->setUser($user);
-        $notification->setCreatedAt(new DateTime());
-
-        $this->entityManager->persist($notification);
-        $this->entityManager->flush();
-
-        $notificationData = [
-            'id' => $notification->getId(),
-            'type' => $notification->getType(),
-            'data' => $notification->getData(),
-            'userId' => $notification->getUser()->getId(),
-            'createdAt' => $notification->getCreatedAt()->format('Y-m-d H:i:s'),
-        ];
-
-        return new JsonResponse(['data' => $notificationData], Response::HTTP_CREATED);
+        return new JsonResponse(['data' => $notification], Response::HTTP_CREATED);
     }
 
     #[Route('/{id}', name: 'update', methods: ['PUT'])]
-    public function update(Request $request, NotificationRepository $notificationRepository, int $id): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
-        $notification = $notificationRepository->find($id);
-
-        if (!$notification) {
-            return new JsonResponse(['error' => 'Notification not found'], Response::HTTP_NOT_FOUND);
-        }
-
         $data = json_decode($request->getContent(), true);
+        $notification = $this->notificationService->updateNotification($id, $data);
 
-        $notification->setType($data['type'] ?? $notification->getType());
-        $notification->setData($data['data'] ?? $notification->getData());
-
-        $this->entityManager->flush();
-
-        $notificationData = [
-            'id' => $notification->getId(),
-            'type' => $notification->getType(),
-            'data' => $notification->getData(),
-            'userId' => $notification->getUser()->getId(),
-            'createdAt' => $notification->getCreatedAt()->format('Y-m-d H:i:s'),
-        ];
-
-        return new JsonResponse(['data' => $notificationData], Response::HTTP_OK);
+        return new JsonResponse(['data' => $notification], Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
-    public function delete(NotificationRepository $notificationRepository, int $id): JsonResponse
+    public function delete(int $id): JsonResponse
     {
-        $notification = $notificationRepository->find($id);
-
-        if (!$notification) {
-            return new JsonResponse(['error' => 'Notification not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        $this->entityManager->remove($notification);
-        $this->entityManager->flush();
+        $this->notificationService->deleteNotification($id);
 
         return new JsonResponse(['message' => 'Notification deleted successfully'], Response::HTTP_OK);
     }
