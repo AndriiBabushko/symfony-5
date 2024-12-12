@@ -106,7 +106,7 @@ class InteractionService
         return $interaction;
     }
 
-    private function serializeInteraction(Interaction $interaction): array
+    public function serializeInteraction(Interaction $interaction): array
     {
         return [
             'id' => $interaction->getId(),

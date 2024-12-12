@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Repository\FriendRepository;
 use App\Services\FriendService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,11 +21,24 @@ class FriendController extends AbstractController
     }
 
     #[Route('', name: 'get_all', methods: ['GET'])]
-    public function getAll(): JsonResponse
+    public function getAll(Request $request, FriendRepository $friendRepository): JsonResponse
     {
-        $friends = $this->friendService->getAllFriends();
+        $requestData = $request->query->all();
+        $itemsPerPage = isset($requestData['itemsPerPage']) ? (int)$requestData['itemsPerPage'] : 10;
+        $page = isset($requestData['page']) ? (int)$requestData['page'] : 1;
 
-        return new JsonResponse(['data' => $friends], Response::HTTP_OK);
+        $friendsData = $friendRepository->getAllFriendsByFilter($requestData, $itemsPerPage, $page);
+
+        $friends = array_map([$this->friendService, 'serializeFriend'], $friendsData['friends']);
+
+        return new JsonResponse([
+            'data' => $friends,
+            'meta' => [
+                'totalItems' => $friendsData['totalItems'],
+                'totalPageCount' => $friendsData['totalPageCount'],
+                'currentPage' => $page,
+            ]
+        ], Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'get_one', methods: ['GET'])]

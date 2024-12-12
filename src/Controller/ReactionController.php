@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Repository\ReactionRepository;
 use App\Services\ReactionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,11 +21,24 @@ class ReactionController extends AbstractController
     }
 
     #[Route('', name: 'get_all', methods: ['GET'])]
-    public function getAll(): JsonResponse
+    public function getAll(Request $request, ReactionRepository $reactionRepository): JsonResponse
     {
-        $reactions = $this->reactionService->getAllReactions();
+        $requestData = $request->query->all();
+        $itemsPerPage = isset($requestData['itemsPerPage']) ? (int)$requestData['itemsPerPage'] : 10;
+        $page = isset($requestData['page']) ? (int)$requestData['page'] : 1;
 
-        return new JsonResponse(['data' => $reactions], Response::HTTP_OK);
+        $reactionsData = $reactionRepository->getAllReactionsByFilter($requestData, $itemsPerPage, $page);
+
+        $reactions = array_map([$this->reactionService, 'serializeReaction'], $reactionsData['reactions']);
+
+        return new JsonResponse([
+            'data' => $reactions,
+            'meta' => [
+                'totalItems' => $reactionsData['totalItems'],
+                'totalPageCount' => $reactionsData['totalPageCount'],
+                'currentPage' => $page,
+            ],
+        ], Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'get_one', methods: ['GET'])]

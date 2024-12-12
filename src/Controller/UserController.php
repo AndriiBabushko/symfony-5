@@ -21,13 +21,24 @@ class UserController extends AbstractController
     }
 
     #[Route('', name: 'get_all', methods: ['GET'])]
-    public function getAll(UserRepository $userRepository): JsonResponse
+    public function getAll(Request $request, UserRepository $userRepository): JsonResponse
     {
-        $users = $userRepository->findAll();
+        $requestData = $request->query->all();
+        $itemsPerPage = isset($requestData['itemsPerPage']) ? (int)$requestData['itemsPerPage'] : 10;
+        $page = isset($requestData['page']) ? (int)$requestData['page'] : 1;
 
-        $userData = array_map([$this->userService, 'serializeUser'], $users);
+        $usersData = $userRepository->getAllUsersByFilter($requestData, $itemsPerPage, $page);
 
-        return new JsonResponse(['data' => $userData], Response::HTTP_OK);
+        $users = array_map([$this->userService, 'serializeUser'], $usersData['users']);
+
+        return new JsonResponse([
+            'data' => $users,
+            'meta' => [
+                'totalItems' => $usersData['totalItems'],
+                'totalPageCount' => $usersData['totalPageCount'],
+                'currentPage' => $page,
+            ]
+        ], Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'get_one', methods: ['GET'])]

@@ -112,7 +112,7 @@ class FriendService
         return $friendship;
     }
 
-    private function serializeFriend(Friend $friend): array
+    public function serializeFriend(Friend $friend): array
     {
         return [
             'id' => $friend->getId(),

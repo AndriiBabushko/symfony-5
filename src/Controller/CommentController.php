@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Repository\CommentRepository;
 use App\Services\CommentService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,11 +21,24 @@ class CommentController extends AbstractController
     }
 
     #[Route('', name: 'get_all', methods: ['GET'])]
-    public function getAll(): JsonResponse
+    public function getAll(Request $request, CommentRepository $commentRepository): JsonResponse
     {
-        $comments = $this->commentService->getAllComments();
+        $requestData = $request->query->all();
+        $itemsPerPage = isset($requestData['itemsPerPage']) ? (int)$requestData['itemsPerPage'] : 10;
+        $page = isset($requestData['page']) ? (int)$requestData['page'] : 1;
 
-        return new JsonResponse(['data' => $comments], Response::HTTP_OK);
+        $commentsData = $commentRepository->getAllCommentsByFilter($requestData, $itemsPerPage, $page);
+
+        $comments = array_map([$this->commentService, 'serializeComment'], $commentsData['comments']);
+
+        return new JsonResponse([
+            'data' => $comments,
+            'meta' => [
+                'totalItems' => $commentsData['totalItems'],
+                'totalPageCount' => $commentsData['totalPageCount'],
+                'currentPage' => $page,
+            ]
+        ], Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'get_one', methods: ['GET'])]

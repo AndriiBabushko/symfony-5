@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Repository\GroupMemberRepository;
 use App\Services\GroupMemberService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,10 +21,27 @@ class GroupMemberController extends AbstractController
     }
 
     #[Route('', name: 'get_all', methods: ['GET'])]
-    public function getAll(): JsonResponse
+    public function getAll(Request $request, GroupMemberRepository $groupMemberRepository): JsonResponse
     {
-        $groupMembers = $this->groupMemberService->getAllGroupMembers();
-        return new JsonResponse(['data' => $groupMembers], Response::HTTP_OK);
+        $requestData = $request->query->all();
+        $itemsPerPage = isset($requestData['itemsPerPage']) ? (int)$requestData['itemsPerPage'] : 10;
+        $page = isset($requestData['page']) ? (int)$requestData['page'] : 1;
+
+        $groupMembersData = $groupMemberRepository->getAllGroupMembersByFilter($requestData, $itemsPerPage, $page);
+
+        $groupMembers = array_map(
+            [$this->groupMemberService, 'serializeGroupMember'],
+            $groupMembersData['groupMembers']
+        );
+
+        return new JsonResponse([
+            'data' => $groupMembers,
+            'meta' => [
+                'totalItems' => $groupMembersData['totalItems'],
+                'totalPageCount' => $groupMembersData['totalPageCount'],
+                'currentPage' => $page,
+            ]
+        ], Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'get_one', methods: ['GET'])]

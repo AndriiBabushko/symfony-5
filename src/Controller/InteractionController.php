@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Repository\InteractionRepository;
 use App\Services\InteractionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,10 +21,27 @@ class InteractionController extends AbstractController
     }
 
     #[Route('', name: 'get_all', methods: ['GET'])]
-    public function getAll(): JsonResponse
+    public function getAll(Request $request, InteractionRepository $interactionRepository): JsonResponse
     {
-        $interactions = $this->interactionService->getAllInteractions();
-        return new JsonResponse(['data' => $interactions], Response::HTTP_OK);
+        $requestData = $request->query->all();
+        $itemsPerPage = isset($requestData['itemsPerPage']) ? (int)$requestData['itemsPerPage'] : 10;
+        $page = isset($requestData['page']) ? (int)$requestData['page'] : 1;
+
+        $interactionsData = $interactionRepository->getAllInteractionsByFilter($requestData, $itemsPerPage, $page);
+
+        $interactions = array_map(
+            [$this->interactionService, 'serializeInteraction'],
+            $interactionsData['interactions']
+        );
+
+        return new JsonResponse([
+            'data' => $interactions,
+            'meta' => [
+                'totalItems' => $interactionsData['totalItems'],
+                'totalPageCount' => $interactionsData['totalPageCount'],
+                'currentPage' => $page,
+            ]
+        ], Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'get_one', methods: ['GET'])]

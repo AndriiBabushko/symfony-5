@@ -118,7 +118,7 @@ class CommentService
         return $comment;
     }
 
-    private function serializeComment(Comment $comment): array
+    public function serializeComment(Comment $comment): array
     {
         return [
             'id' => $comment->getId(),

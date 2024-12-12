@@ -112,7 +112,7 @@ class MessageService
         return $message;
     }
 
-    private function serializeMessage(Message $message): array
+    public function serializeMessage(Message $message): array
     {
         return [
             'id' => $message->getId(),

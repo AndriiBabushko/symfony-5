@@ -107,7 +107,7 @@ class NotificationService
         return $notification;
     }
 
-    private function serializeNotification(Notification $notification): array
+    public function serializeNotification(Notification $notification): array
     {
         return [
             'id' => $notification->getId(),

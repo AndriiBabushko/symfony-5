@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Repository\MessageRepository;
 use App\Services\MessageService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,11 +21,24 @@ class MessageController extends AbstractController
     }
 
     #[Route('', name: 'get_all', methods: ['GET'])]
-    public function getAll(): JsonResponse
+    public function getAll(Request $request, MessageRepository $messageRepository): JsonResponse
     {
-        $messages = $this->messageService->getAllMessages();
+        $requestData = $request->query->all();
+        $itemsPerPage = isset($requestData['itemsPerPage']) ? (int)$requestData['itemsPerPage'] : 10;
+        $page = isset($requestData['page']) ? (int)$requestData['page'] : 1;
 
-        return new JsonResponse(['data' => $messages], Response::HTTP_OK);
+        $messagesData = $messageRepository->getAllMessagesByFilter($requestData, $itemsPerPage, $page);
+
+        $messages = array_map([$this->messageService, 'serializeMessage'], $messagesData['messages']);
+
+        return new JsonResponse([
+            'data' => $messages,
+            'meta' => [
+                'totalItems' => $messagesData['totalItems'],
+                'totalPageCount' => $messagesData['totalPageCount'],
+                'currentPage' => $page,
+            ]
+        ], Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'get_one', methods: ['GET'])]

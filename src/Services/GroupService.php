@@ -107,7 +107,7 @@ class GroupService
         return $group;
     }
 
-    private function serializeGroup(Group $group): array
+    public function serializeGroup(Group $group): array
     {
         return [
             'id' => $group->getId(),

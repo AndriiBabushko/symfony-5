@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Repository\NotificationRepository;
 use App\Services\NotificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,10 +21,27 @@ class NotificationController extends AbstractController
     }
 
     #[Route('', name: 'get_all', methods: ['GET'])]
-    public function getAll(): JsonResponse
+    public function getAll(Request $request, NotificationRepository $notificationRepository): JsonResponse
     {
-        $notifications = $this->notificationService->getAllNotifications();
-        return new JsonResponse(['data' => $notifications], Response::HTTP_OK);
+        $requestData = $request->query->all();
+        $itemsPerPage = isset($requestData['itemsPerPage']) ? (int)$requestData['itemsPerPage'] : 10;
+        $page = isset($requestData['page']) ? (int)$requestData['page'] : 1;
+
+        $notificationsData = $notificationRepository->getAllNotificationsByFilter($requestData, $itemsPerPage, $page);
+
+        $notifications = array_map(
+            [$this->notificationService, 'serializeNotification'],
+            $notificationsData['notifications']
+        );
+
+        return new JsonResponse([
+            'data' => $notifications,
+            'meta' => [
+                'totalItems' => $notificationsData['totalItems'],
+                'totalPageCount' => $notificationsData['totalPageCount'],
+                'currentPage' => $page,
+            ]
+        ], Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'get_one', methods: ['GET'])]

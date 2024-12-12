@@ -117,7 +117,7 @@ class ReactionService
         return $reaction;
     }
 
-    private function serializeReaction(Reaction $reaction): array
+    public function serializeReaction(Reaction $reaction): array
     {
         return [
             'id' => $reaction->getId(),

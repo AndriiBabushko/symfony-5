@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Repository\PostRepository;
 use App\Services\PostService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,11 +21,24 @@ class PostController extends AbstractController
     }
 
     #[Route('', name: 'get_all', methods: ['GET'])]
-    public function getAll(): JsonResponse
+    public function getAll(Request $request, PostRepository $postRepository): JsonResponse
     {
-        $posts = $this->postService->getAllPosts();
+        $requestData = $request->query->all();
+        $itemsPerPage = isset($requestData['itemsPerPage']) ? (int)$requestData['itemsPerPage'] : 10;
+        $page = isset($requestData['page']) ? (int)$requestData['page'] : 1;
 
-        return new JsonResponse(['data' => $posts], Response::HTTP_OK);
+        $postsData = $postRepository->getAllPostsByFilter($requestData, $itemsPerPage, $page);
+
+        $posts = array_map([$this->postService, 'serializePost'], $postsData['posts']);
+
+        return new JsonResponse([
+            'data' => $posts,
+            'meta' => [
+                'totalItems' => $postsData['totalItems'],
+                'totalPageCount' => $postsData['totalPageCount'],
+                'currentPage' => $page,
+            ]
+        ], Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'get_one', methods: ['GET'])]
