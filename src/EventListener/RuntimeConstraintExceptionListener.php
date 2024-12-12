@@ -10,9 +10,6 @@ use Throwable;
 
 class RuntimeConstraintExceptionListener
 {
-    /**
-     * @param ExceptionEvent $event
-     */
     public function onKernelException(ExceptionEvent $event): void
     {
         $exception = $event->getThrowable();
@@ -34,14 +31,14 @@ class RuntimeConstraintExceptionListener
     private function getCode(Throwable $exception): int
     {
         if (method_exists($exception, "getStatusCode")) {
-            return array_key_exists($exception->getStatusCode(), Response::$statusTexts) ?
-                $exception->getStatusCode() :
-                Response::HTTP_UNPROCESSABLE_ENTITY;
+            return array_key_exists($exception->getStatusCode(), Response::$statusTexts)
+                ? $exception->getStatusCode()
+                : Response::HTTP_UNPROCESSABLE_ENTITY;
         }
 
-        return array_key_exists($exception->getCode(), Response::$statusTexts) ?
-            $exception->getCode() :
-            Response::HTTP_UNPROCESSABLE_ENTITY;
+        return array_key_exists($exception->getCode(), Response::$statusTexts)
+            ? $exception->getCode()
+            : Response::HTTP_UNPROCESSABLE_ENTITY;
     }
 
     /**
@@ -50,55 +47,30 @@ class RuntimeConstraintExceptionListener
      */
     private function getErrors(Throwable $exception): array
     {
-        $errors = [];
-
         if (method_exists($exception, "getConstraintViolationList")) {
-            return $this->getAssociativeErrorsForConstraintViolationList(
-                $exception->getConstraintViolationList(),
-                $errors
-            );
+            return $this->getAssociativeErrorsForConstraintViolationList($exception->getConstraintViolationList());
         }
 
         if ($tmpErrors = json_decode($exception->getMessage(), true)) {
-            return $this->getAssociativeErrors($tmpErrors["data"]["errors"] ?? $tmpErrors, $errors);
+            return $tmpErrors['errors'] ?? [['message' => $exception->getMessage()]];
         }
 
-        $errors[] = [$exception->getMessage()];
-
-        return $errors;
-    }
-
-    /**
-     * @param array $tmpErrors
-     * @param array $errors
-     * @return array
-     */
-    private function getAssociativeErrors(array $tmpErrors, array $errors): array
-    {
-        foreach ($tmpErrors as $key => $error) {
-            if (is_array($error)) {
-                $errors[$key] = $this->getAssociativeErrors($error, $errors);
-            } else {
-                $errors[$key] = $error;
-            }
-        }
-
-        return $errors;
+        return [['message' => $exception->getMessage()]];
     }
 
     /**
      * @param ConstraintViolationList $list
-     * @param array $errors
      * @return array
      */
-    private function getAssociativeErrorsForConstraintViolationList(
-        ConstraintViolationList $list,
-        array $errors
-    ): array {
-        foreach ($list as $key => $error) {
-            $errors[$key][$error->getPropertyPath()] = $error->getMessage();
+    private function getAssociativeErrorsForConstraintViolationList(ConstraintViolationList $list): array
+    {
+        $errors = [];
+        foreach ($list as $error) {
+            $errors[] = [
+                'field' => $error->getPropertyPath(),
+                'message' => $error->getMessage(),
+            ];
         }
-
         return $errors;
     }
 }

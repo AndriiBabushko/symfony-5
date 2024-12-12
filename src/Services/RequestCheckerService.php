@@ -17,16 +17,9 @@ class RequestCheckerService
         $this->validator = $validator;
     }
 
-    /**
-     * Перевірка, чи всі обов'язкові поля присутні в запиті.
-     *
-     * @param mixed $content
-     * @param array $fields
-     * @return bool
-     */
     public function check(mixed $content, array $fields): bool
     {
-        $errors = '';
+        $errors = [];
 
         if (!isset($content)) {
             throw new BadRequestException('Empty content', Response::HTTP_BAD_REQUEST);
@@ -34,13 +27,16 @@ class RequestCheckerService
 
         foreach ($fields as $field) {
             if (!isset($content[$field])) {
-                $errors .= $field . '; ';
+                $errors[] = [
+                    'field' => $field,
+                    'message' => 'This field is required.',
+                ];
             }
         }
 
-        if ($errors) {
+        if (!empty($errors)) {
             throw new BadRequestException(
-                'Required fields are missed: ' . rtrim($errors, '; '),
+                json_encode(['errors' => $errors]),
                 Response::HTTP_BAD_REQUEST
             );
         }
@@ -48,14 +44,6 @@ class RequestCheckerService
         return true;
     }
 
-    /**
-     * Перевірка даних на відповідність вказаним обмеженням.
-     *
-     * @param array|object $data
-     * @param array|null $constraints
-     * @param bool|null $removeSquareBracketFromPropertyPath
-     * @return void
-     */
     public function validateRequestDataByConstraints(
         array|object $data,
         ?array $constraints = null,
@@ -72,23 +60,18 @@ class RequestCheckerService
         foreach ($errors as $error) {
             $key = $error->getPropertyPath();
 
-            $key = str_replace(['[', ']'], '', $key);
-
             if ($removeSquareBracketFromPropertyPath) {
                 $key = preg_replace('/\[.*?\]/', '', $key);
             }
 
             $validationErrors[] = [
-                'field' => $key,
+                'field' => str_replace(['[', ']'], '', $key),
                 'message' => $error->getMessage(),
             ];
         }
 
         throw new UnprocessableEntityHttpException(json_encode([
-            "code" => Response::HTTP_UNPROCESSABLE_ENTITY,
             "errors" => $validationErrors,
         ]));
     }
-
-
 }
