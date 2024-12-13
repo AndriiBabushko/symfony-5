@@ -19,8 +19,8 @@ class NotificationService
     public function __construct(
         EntityManagerInterface $entityManager,
         NotificationRepository $notificationRepository,
-        UserRepository $userRepository,
-        RequestCheckerService $requestCheckerService
+        UserRepository         $userRepository,
+        RequestCheckerService  $requestCheckerService
     ) {
         $this->entityManager = $entityManager;
         $this->notificationRepository = $notificationRepository;

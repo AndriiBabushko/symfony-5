@@ -21,10 +21,10 @@ class CommentService
 
     public function __construct(
         EntityManagerInterface $entityManager,
-        CommentRepository $commentRepository,
-        UserRepository $userRepository,
-        PostRepository $postRepository,
-        RequestCheckerService $requestCheckerService
+        CommentRepository      $commentRepository,
+        UserRepository         $userRepository,
+        PostRepository         $postRepository,
+        RequestCheckerService  $requestCheckerService
     ) {
         $this->entityManager = $entityManager;
         $this->commentRepository = $commentRepository;

@@ -18,9 +18,9 @@ class MessageService
 
     public function __construct(
         EntityManagerInterface $entityManager,
-        MessageRepository $messageRepository,
-        UserRepository $userRepository,
-        RequestCheckerService $requestCheckerService
+        MessageRepository      $messageRepository,
+        UserRepository         $userRepository,
+        RequestCheckerService  $requestCheckerService
     ) {
         $this->entityManager = $entityManager;
         $this->messageRepository = $messageRepository;

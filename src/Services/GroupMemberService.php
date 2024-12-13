@@ -21,10 +21,10 @@ class GroupMemberService
 
     public function __construct(
         EntityManagerInterface $entityManager,
-        GroupMemberRepository $groupMemberRepository,
-        UserRepository $userRepository,
-        GroupRepository $groupRepository,
-        RequestCheckerService $requestCheckerService
+        GroupMemberRepository  $groupMemberRepository,
+        UserRepository         $userRepository,
+        GroupRepository        $groupRepository,
+        RequestCheckerService  $requestCheckerService
     ) {
         $this->entityManager = $entityManager;
         $this->groupMemberRepository = $groupMemberRepository;

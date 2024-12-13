@@ -18,9 +18,9 @@ class FriendService
 
     public function __construct(
         EntityManagerInterface $entityManager,
-        FriendRepository $friendRepository,
-        UserRepository $userRepository,
-        RequestCheckerService $requestCheckerService
+        FriendRepository       $friendRepository,
+        UserRepository         $userRepository,
+        RequestCheckerService  $requestCheckerService
     ) {
         $this->entityManager = $entityManager;
         $this->friendRepository = $friendRepository;

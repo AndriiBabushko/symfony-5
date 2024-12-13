@@ -5,18 +5,41 @@ namespace App\Services;
 use App\Entity\User;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserService
 {
     private EntityManagerInterface $entityManager;
     private RequestCheckerService $requestCheckerService;
+    private JWTTokenManagerInterface $jwtManager;
+    private UserPasswordHasherInterface $passwordHasher;
 
     public function __construct(
         EntityManagerInterface $entityManager,
-        RequestCheckerService $requestCheckerService
+        RequestCheckerService $requestCheckerService,
+        JWTTokenManagerInterface $jwtManager,
+        UserPasswordHasherInterface $passwordHasher
     ) {
         $this->entityManager = $entityManager;
         $this->requestCheckerService = $requestCheckerService;
+        $this->jwtManager = $jwtManager;
+        $this->passwordHasher = $passwordHasher;
+    }
+
+    public function getUserByEmail(string $email): ?User
+    {
+        return $this->entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
+    }
+
+    public function generateJWT(User $user): string
+    {
+        return $this->jwtManager->create($user);
+    }
+
+    public function isPasswordValid(User $user, string $password): bool
+    {
+        return $this->passwordHasher->isPasswordValid($user, $password);
     }
 
     /**

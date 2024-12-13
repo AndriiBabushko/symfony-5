@@ -21,10 +21,10 @@ class ReactionService
 
     public function __construct(
         EntityManagerInterface $entityManager,
-        ReactionRepository $reactionRepository,
-        UserRepository $userRepository,
-        PostRepository $postRepository,
-        RequestCheckerService $requestCheckerService
+        ReactionRepository     $reactionRepository,
+        UserRepository         $userRepository,
+        PostRepository         $postRepository,
+        RequestCheckerService  $requestCheckerService
     ) {
         $this->entityManager = $entityManager;
         $this->reactionRepository = $reactionRepository;

@@ -17,9 +17,9 @@ class PostService
 
     public function __construct(
         EntityManagerInterface $entityManager,
-        UserRepository $userRepository,
-        PostRepository $postRepository,
-        RequestCheckerService $requestCheckerService
+        UserRepository         $userRepository,
+        PostRepository         $postRepository,
+        RequestCheckerService  $requestCheckerService
     ) {
         $this->entityManager = $entityManager;
         $this->userRepository = $userRepository;

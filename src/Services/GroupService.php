@@ -18,9 +18,9 @@ class GroupService
 
     public function __construct(
         EntityManagerInterface $entityManager,
-        GroupRepository $groupRepository,
-        UserRepository $userRepository,
-        RequestCheckerService $requestCheckerService
+        GroupRepository        $groupRepository,
+        UserRepository         $userRepository,
+        RequestCheckerService  $requestCheckerService
     ) {
         $this->entityManager = $entityManager;
         $this->groupRepository = $groupRepository;

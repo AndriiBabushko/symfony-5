@@ -24,8 +24,8 @@ services:
 #      arguments:
 #        $validator: '@validator'
     App\EventListener\RuntimeConstraintExceptionListener:
-      tags:
-        - { name: kernel.event_listener, event: kernel.exception }
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception }
     App\Services\RequestCheckerService: ~
 
   # add more service definitions when explicit configuration is needed

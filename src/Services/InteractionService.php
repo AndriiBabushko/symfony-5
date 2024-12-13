@@ -18,9 +18,9 @@ class InteractionService
 
     public function __construct(
         EntityManagerInterface $entityManager,
-        InteractionRepository $interactionRepository,
-        UserRepository $userRepository,
-        RequestCheckerService $requestCheckerService
+        InteractionRepository  $interactionRepository,
+        UserRepository         $userRepository,
+        RequestCheckerService  $requestCheckerService
     ) {
         $this->entityManager = $entityManager;
         $this->interactionRepository = $interactionRepository;
