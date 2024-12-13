@@ -72,6 +72,7 @@ class UsersController extends AbstractController
     }
 
     #[Route('', name: 'get_all', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
     public function getAll(Request $request, UserRepository $userRepository): JsonResponse
     {
         $requestData = $request->query->all();
@@ -93,6 +94,7 @@ class UsersController extends AbstractController
     }
 
     #[Route('/{id}', name: 'get_one', methods: ['GET'])]
+//    #[IsGranted('ROLE_USER')]
     public function getOne(UserRepository $userRepository, int $id): JsonResponse
     {
         $user = $userRepository->find($id);
