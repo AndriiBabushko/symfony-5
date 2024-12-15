@@ -1,22 +1,22 @@
 <?php
-//
-//namespace App\Repository;
-//
-//use App\Entity\Interaction;
-//use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+
+namespace App\Repository;
+
+use App\Entity\Interaction;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 //use Doctrine\ORM\Tools\Pagination\Paginator;
-//use Doctrine\Persistence\ManagerRegistry;
-//
-///**
-// * @extends ServiceEntityRepository<Interaction>
-// */
-//class InteractionRepository extends ServiceEntityRepository
-//{
-//    public function __construct(ManagerRegistry $registry)
-//    {
-//        parent::__construct($registry, Interaction::class);
-//    }
-//
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * @extends ServiceEntityRepository<Interaction>
+ */
+class InteractionRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Interaction::class);
+    }
+
 //    public function getAllInteractionsByFilter(array $data, int $itemsPerPage, int $page): array
 //    {
 //        $queryBuilder = $this->createQueryBuilder('i');
@@ -49,4 +49,4 @@
 //            'totalItems' => $totalItems,
 //        ];
 //    }
-//}
+}

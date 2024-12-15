@@ -33,7 +33,7 @@ class UserRepository extends ServiceEntityRepository
 //        $this->getEntityManager()->persist($user);
 //        $this->getEntityManager()->flush();
 //    }
-
+//
 //    public function getAllUsersByFilter(array $data, int $itemsPerPage, int $page): array
 //    {
 //        $queryBuilder = $this->createQueryBuilder('user');

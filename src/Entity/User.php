@@ -2,8 +2,12 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Delete;
@@ -19,14 +23,20 @@ use Symfony\Component\Validator\Constraints as Assert;
 //#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[ApiResource(
     operations: [
-        new GetCollection(),
+        new GetCollection(
+            paginationEnabled: true,
+            paginationItemsPerPage: 10,
+            paginationClientItemsPerPage: true
+        ),
         new Post(),
         new Get(),
+        new Patch(),
         new Put(),
         new Delete()
-    ],
-    paginationEnabled: false
+    ]
 )]
+#[ApiFilter(SearchFilter::class, properties: ['username' => 'partial', 'email' => 'exact'])]
+#[ApiFilter(OrderFilter::class, properties: ['createdAt', 'username'], arguments: ['orderParameterName' => 'order'])]
 class User
 {
     #[ORM\Id]
