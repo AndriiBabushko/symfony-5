@@ -12,6 +12,7 @@ use ApiPlatform\Metadata\Post as ApiPost;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\GetCollection;
+use App\Action\Post\SetPostPublishedAction;
 use App\Repository\PostRepository;
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -34,12 +35,24 @@ use Symfony\Component\Serializer\Annotation\Groups;
         new Get(),
         new Patch(),
         new Put(),
-        new Delete()
+        new Delete(),
+        new ApiPost(
+            uriTemplate: '/posts/publish',
+            controller: SetPostPublishedAction::class,
+            denormalizationContext: ['groups' => ['post:write']],
+            name: 'set_post_published'
+        ),
+        new Delete(
+            uriTemplate: '/posts/comments/remove',
+            controller: RemovePostCommentsAction::class,
+            denormalizationContext: ['groups' => ['post:write']],
+            name: 'remove_post_comments'
+        )
     ],
     normalizationContext: ['groups' => ['post:read']],
     denormalizationContext: ['groups' => ['post:write']]
 )]
-#[ApiFilter(SearchFilter::class, properties: ['content' => 'partial', 'user.username' => 'partial'])]
+#[ApiFilter(SearchFilter::class, properties: ['content' => 'partial', 'user.username' => 'partial', 'status' => 'exact'])]
 #[ApiFilter(OrderFilter::class, properties: ['createdAt', 'updatedAt'], arguments: ['orderParameterName' => 'order'])]
 class Post
 {
@@ -87,14 +100,33 @@ class Post
     #[Groups(['post:read', 'post:write'])]
     private ?User $user = null;
 
+    #[ORM\Column(length: 50)]
+    #[Assert\NotBlank(message: "Status should not be blank.")]
+    #[Assert\NotNull(message: "Status cannot be null.")]
+    #[Assert\Choice(
+        choices: ["draft", "published", "archived"],
+        message: "Status must be one of 'draft', 'published', or 'archived'."
+    )]
+    #[Assert\Length(
+        max: 50,
+        maxMessage: "Status cannot exceed {{ limit }} characters."
+    )]
+    #[Groups(['post:read', 'post:write'])]
+    private ?string $status = null;
+
     #[ORM\OneToMany(targetEntity: Reaction::class, mappedBy: 'post', cascade: ['persist', 'remove'])]
     #[Groups(['post:read'])]
     private Collection $reactions;
+
+    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'post', cascade: ['persist', 'remove'])]
+    #[Groups(['post:read'])]
+    private Collection $comments;
 
     public function __construct()
     {
         $this->createdAt = new DateTime();
         $this->reactions = new ArrayCollection();
+        $this->comments = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -162,6 +194,18 @@ class Post
         return $this;
     }
 
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): self
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
     /**
      * @return Collection<int, Reaction>
      */
@@ -185,6 +229,35 @@ class Post
         if ($this->reactions->removeElement($reaction)) {
             if ($reaction->getPost() === $this) {
                 $reaction->setPost(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Comment>
+     */
+    public function getComments(): Collection
+    {
+        return $this->comments;
+    }
+
+    public function addComment(Comment $comment): self
+    {
+        if (!$this->comments->contains($comment)) {
+            $this->comments->add($comment);
+            $comment->setPost($this);
+        }
+
+        return $this;
+    }
+
+    public function removeComment(Comment $comment): self
+    {
+        if ($this->comments->removeElement($comment)) {
+            if ($comment->getPost() === $this) {
+                $comment->setPost(null);
             }
         }
 
