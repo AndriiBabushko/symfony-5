@@ -14,11 +14,20 @@ services:
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     App\:
-        resource: '../src/'
-        exclude:
-            - '../src/DependencyInjection/'
-            - '../src/Entity/'
-            - '../src/Kernel.php'
+      resource: '../src/'
+      exclude:
+        - '../src/DependencyInjection/'
+        - '../src/Kernel.php'
 
-    # add more service definitions when explicit configuration is needed
+    App\Action\Post\:
+      resource: '../src/Action/Post'
+      tags: [ 'controller.service_arguments' ]
+
+    App\EventListener\RuntimeConstraintExceptionListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception }
+
+    App\Services\RequestCheckerService: ~
+
+  # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
