@@ -12,6 +12,7 @@ use ApiPlatform\Metadata\Post as ApiPost;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\GetCollection;
+use App\Action\Post\RemovePostCommentsAction;
 use App\Action\Post\SetPostPublishedAction;
 use App\Repository\PostRepository;
 use DateTime;
@@ -40,12 +41,14 @@ use Symfony\Component\Serializer\Annotation\Groups;
             uriTemplate: '/posts/publish',
             controller: SetPostPublishedAction::class,
             denormalizationContext: ['groups' => ['post:write']],
+            read: false,
+            write: true,
             name: 'set_post_published'
         ),
         new Delete(
-            uriTemplate: '/posts/comments/remove',
+            uriTemplate: '/posts/comments/remove/{id}',
+            requirements: ['id' => '\d+'],
             controller: RemovePostCommentsAction::class,
-            denormalizationContext: ['groups' => ['post:write']],
             name: 'remove_post_comments'
         )
     ],

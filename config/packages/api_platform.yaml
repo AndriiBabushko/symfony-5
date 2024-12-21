@@ -8,18 +8,3 @@ api_platform:
     formats:
         jsonld: [ 'application/ld+json' ]
         json: [ 'application/json' ],
-    collection_operations:
-        post:
-            method: POST
-            path: '/posts/publish'
-            controller: App\Action\SetPostPublishedAction
-            read: false
-            write: false
-            normalization_context: { groups: [ 'post:write' ] }
-        delete:
-            method: DELETE
-            path: '/posts/comments/remove'
-            controller: App\Action\RemovePostCommentsAction
-            read: false
-            write: false
-            normalization_context: { groups: [ 'post:write' ] }
